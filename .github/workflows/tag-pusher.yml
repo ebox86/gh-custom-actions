@@ -1,25 +1,22 @@
-name: Update floating version tag
+name: Auto-update floating version tag
 
 on:
-  workflow_dispatch:
-    inputs:
-      target_tag:
-        description: "Existing release tag to point the floating tag at (e.g. v1.1.0)"
-        required: true
-      floating_tag:
-        description: "Floating tag to update (e.g. v1)"
-        required: false
-        default: "v1"
+  # Runs whenever you publish a GitHub Release
+  release:
+    types: [published]
 
 jobs:
   update-floating-tag:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write   # needed to push updated tag
+
     steps:
-      - name: Checkout with tags
+      - name: Checkout with full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # need full history and tags
+          fetch-depth: 0  # need tags + history
 
       - name: Configure git user
         run: |
@@ -29,36 +26,39 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Validate target tag exists
+      - name: Move floating major tag
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          TARGET="${{ github.event.inputs.target_tag }}"
-          if ! git rev-parse "refs/tags/$TARGET" >/dev/null 2>&1; then
-            echo "Target tag '$TARGET' does not exist in this repo."
-            exit 1
+          echo "Release tag from event: $TAG_NAME"
+
+          # Only handle tags that look like vMAJOR.MINOR.PATCH
+          if ! echo "$TAG_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Tag '$TAG_NAME' does not match vMAJOR.MINOR.PATCH. Skipping floating tag update."
+            exit 0
           fi
 
-      - name: Move floating tag
-        run: |
-          TARGET="${{ github.event.inputs.target_tag }}"
-          FLOATING="${{ github.event.inputs.floating_tag }}"
+          # Extract MAJOR from vMAJOR.MINOR.PATCH
+          MAJOR=$(echo "$TAG_NAME" | sed -E 's/^v([0-9]+).*/\1/')
+          FLOATING="v$MAJOR"
 
-          echo "Updating floating tag '$FLOATING' to point at '$TARGET'..."
+          echo "Computed floating tag: $FLOATING (from $TAG_NAME)"
 
-          # Optional: warn if majors don't match (v1 vs v2)
-          TARGET_MAJOR=$(echo "$TARGET" | sed -E 's/^v([0-9]+).*/\1/')
-          FLOATING_MAJOR=$(echo "$FLOATING" | sed -E 's/^v([0-9]+).*/\1/')
-
-          if [ -n "$TARGET_MAJOR" ] && [ -n "$FLOATING_MAJOR" ] && [ "$TARGET_MAJOR" != "$FLOATING_MAJOR" ]; then
-            echo "WARNING: floating tag ($FLOATING) major=v$FLOATING_MAJOR does not match target tag ($TARGET) major=v$TARGET_MAJOR"
+          # Ensure the target tag exists locally
+          if ! git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME not found locally. Fetching from origin..."
+            git fetch origin "refs/tags/$TAG_NAME:refs/tags/$TAG_NAME" || {
+              echo "Could not fetch tag $TAG_NAME from origin."
+              exit 1
+            }
           fi
 
           # Create or move the floating tag locally
-          git tag -f "$FLOATING" "refs/tags/$TARGET"
+          git tag -f "$FLOATING" "refs/tags/$TAG_NAME"
 
-          # Push updated floating tag
+          # Push updated floating tag to origin
+          echo "Pushing floating tag '$FLOATING' to origin (pointing at '$TAG_NAME')..."
           git push origin "refs/tags/$FLOATING" --force
 
-      - name: Summary
-        run: |
-          echo "Floating tag '${{ github.event.inputs.floating_tag }}' now points at '${{ github.event.inputs.target_tag }}'."
+          echo "Done. '$FLOATING' now points at '$TAG_NAME'."
 
