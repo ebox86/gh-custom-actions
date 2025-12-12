@@ -1,0 +1,25 @@
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1F2937"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background card -->
+  <rect x="12" y="12" width="136" height="136" rx="28" fill="url(#bg)"/>
+
+  <!-- Nodes -->
+  <circle cx="52" cy="56" r="10" fill="#60A5FA"/>
+  <circle cx="108" cy="56" r="10" fill="#A855F7"/>
+  <circle cx="52" cy="112" r="10" fill="#34D399"/>
+  <circle cx="108" cy="112" r="10" fill="#FBBF24"/>
+
+  <!-- Edges -->
+  <path d="M62 56 H98" stroke="#E5E7EB" stroke-width="3" stroke-linecap="round"/>
+  <path d="M52 66 V102" stroke="#E5E7EB" stroke-width="3" stroke-linecap="round"/>
+  <path d="M62 112 H98" stroke="#E5E7EB" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Tiny arrow to suggest "workflow" -->
+  <path d="M96 50 L108 56 L96 62 Z" fill="#E5E7EB"/>
+</svg>

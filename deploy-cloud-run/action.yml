@@ -1,0 +1,42 @@
+name: 'Deploy Cloud Run Service'
+description: 'Update an existing Cloud Run service to a new container image.'
+author: 'Evan (ebox86)'
+
+inputs:
+  project_id:
+    description: 'GCP project ID (e.g. pittsburgh-in-progress)'
+    required: true
+  region:
+    description: 'GCP region (e.g. us-east4)'
+    required: true
+  service_name:
+    description: 'Cloud Run service name (e.g. pgh-ingest-api)'
+    required: true
+  image:
+    description: 'Full image URL (Artifact Registry / GCR)'
+    required: true
+  platform:
+    description: 'Cloud Run platform (managed or gke)'
+    required: false
+    default: 'managed'
+  extra_args:
+    description: 'Additional arguments to pass to gcloud run services update (optional)'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Update Cloud Run service
+      shell: bash
+      run: |
+        echo "::group::gcloud run services update ${{ inputs.service_name }}"
+        gcloud config set project "${{ inputs.project_id }}"
+        gcloud run services update "${{ inputs.service_name }}" \
+          --platform="${{ inputs.platform }}" \
+          --region="${{ inputs.region }}" \
+          --image="${{ inputs.image }}" \
+          ${{ inputs.extra_args }} \
+          --quiet
+        echo "::endgroup::"
+
