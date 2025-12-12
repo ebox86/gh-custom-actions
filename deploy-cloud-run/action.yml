@@ -1,6 +1,6 @@
 name: 'Deploy Cloud Run Service'
 description: 'Update an existing Cloud Run service to a new container image.'
-author: 'Evan (ebox86)'
+author: 'Evan Kohout (ebox86)'
 
 inputs:
   project_id:
@@ -40,3 +40,6 @@ runs:
           --quiet
         echo "::endgroup::"
 
+branding:
+  color: "yellow"
+  icon: "cloud"

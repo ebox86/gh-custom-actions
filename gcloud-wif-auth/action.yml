@@ -1,0 +1,32 @@
+name: 'Google Cloud WIF Auth'
+description: Authenticate to Google Cloud via Workload Identity Federation and set up gcloud.
+author: 'Evan Kohout (ebox86)'
+
+inputs:
+  project_id:
+    description: Google Cloud project ID
+    required: true
+  workload_identity_provider:
+    description: Full Workload Identity Provider resource name
+    required: true
+  service_account:
+    description: Service account email to impersonate
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Authenticate to Google Cloud via Workload Identity
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ inputs.workload_identity_provider }}
+        service_account: ${{ inputs.service_account }}
+
+    - name: Set up gcloud
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ inputs.project_id }}
+
+branding:
+  color: "blue"
+  icon: "cloud"
